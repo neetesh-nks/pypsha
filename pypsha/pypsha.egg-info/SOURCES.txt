@@ -1,0 +1,13 @@
+MANIFEST.in
+README.md
+setup.py
+jars/IM_EventSetCalc_v3_0_ASCII.jar
+pypsha/__init__.py
+pypsha/find_modules.py
+pypsha/psha.py
+pypsha/utils.py
+pypsha.egg-info/PKG-INFO
+pypsha.egg-info/SOURCES.txt
+pypsha.egg-info/dependency_links.txt
+pypsha.egg-info/not-zip-safe
+pypsha.egg-info/top_level.txt

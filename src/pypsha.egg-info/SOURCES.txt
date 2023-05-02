@@ -1,9 +1,0 @@
-LICENCE
-README.md
-pyproject.toml
-setup.cfg
-setup.py
-src/pypsha.egg-info/PKG-INFO
-src/pypsha.egg-info/SOURCES.txt
-src/pypsha.egg-info/dependency_links.txt
-src/pypsha.egg-info/top_level.txt

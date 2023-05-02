@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: pypsha
+Version: 0.0.3
+Summary: Package for regional probabilistic seismic hazard analysis
+Home-page: https://github.com/neetesh-nks/pypsha
+Author: Neetesh Sharma
+Author-email: neetesh@stanford.edu
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+
+# PyPSHA
+
+Package for regional probabilistic seismic hazard analysis
+
+## Installation steps
+
+1. Install Java to enable OpenSHA apps
+2. Install cvxpy for optimization modules
+3. pip install psha
