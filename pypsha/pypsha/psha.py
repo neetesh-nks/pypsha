@@ -315,8 +315,8 @@ class PshaEventSet:
         sites = self.events.sites
         
         indices = np.array(list(combinations(sites.index,2)))
-        coords1 = sites.iloc[indices[:,0],:2].values
-        coords2 = sites.iloc[indices[:,1],:2].values
+        coords1 = sites.loc[indices[:,0],['x','y']].values
+        coords2 = sites.loc[indices[:,1],['x','y']].values
         
         distance_matrix = squareform(haversine_distance(coords1[:,0], coords1[:,1], coords2[:,0], coords2[:,1]))
         return distance_matrix
@@ -326,8 +326,8 @@ class PshaEventSet:
         sites = self.events.sites
         
         indices = np.array(list(combinations(sites.index,2)))
-        coords1 = sites.iloc[indices[:,0],:2].values
-        coords2 = sites.iloc[indices[:,1],:2].values
+        coords1 = sites.loc[indices[:,0],['x','y']].values
+        coords2 = sites.loc[indices[:,1],['x','y']].values
         
         distance_matrix = squareform(haversine_distance(coords1[:,0], coords1[:,1], coords2[:,0], coords2[:,1]))
         
@@ -434,6 +434,9 @@ class PshaEventSet:
         nsites = self.events.sites.shape[0]
         nevents = self.events.metadata.shape[0]
         
+        nmaps1 = nmaps
+        if nmaps1 == 1:
+            nmaps = 2
         epsilons = self.get_epsilons(period,maps_size=(nevents,nmaps))
         eta_sites = norm.rvs(0,1,size=(nevents,nmaps,1))
         
@@ -452,8 +455,10 @@ class PshaEventSet:
         idnames.append('map_id')
         dfindex = pd.MultiIndex.from_arrays([subindex1[:,0],subindex1[:,1],subindex2.flatten()], names = idnames)
         df = pd.DataFrame(intensity.reshape((-1,nsites)),index=dfindex, columns = np.char.add('site', np.arange(nsites).astype('str')))
-        self.maps[intensity_id] = df
-        
+        if nmaps1 == 1:
+            self.maps[intensity_id] = df.loc[:,:,0,:]
+        else:
+            self.maps[intensity_id] = df
         return None
 
     def generate_maps_check(self,intensity_id,nmaps):
@@ -480,7 +485,9 @@ class PshaEventSet:
         return None
 
     def generate_sa_maps(self,intensity_ids,nmaps):
-        
+        nmaps1 = nmaps
+        if nmaps1 == 1:
+            nmaps = 2
         periods = []
         intensity_ids_clean = []
         for intensity_id in intensity_ids:        
@@ -530,14 +537,16 @@ class PshaEventSet:
             
             df_im = pd.DataFrame(intensity.reshape((-1,nsites)),index=dfindex, columns = np.char.add('site', np.arange(self.events.sites.shape[0]).astype('str')))
             dfs_dict[intensity_id] = df_im
-            self.maps[intensity_id] = df_im
-
+            if nmaps1==1:
+                self.maps[intensity_id] = df_im.loc[:,:,:0]
+            else:
+                self.maps[intensity_id] = df_im
         return None
 
     def generate_hazard_curves(self,intensity_ids,imvals = np.logspace(-3,1,100)):
         intensity_ids = np.array(intensity_ids).reshape((-1,))
         for intensity_id in intensity_ids:
-            imdf = copy.deepcopy(self.maps[intensity_id])
+            imdf = self.maps[intensity_id]
             imvals_broad = np.repeat(imvals.reshape((-1,1)),imdf.shape[1],axis=1)
             rate_exceedance = np.zeros((imvals.shape[0],imdf.shape[1]))
             for source,rupture in self.events.metadata.index:
@@ -550,9 +559,10 @@ class PshaEventSet:
                          log10_hz_curve_res = 0.05,
                          candies_per_event = 5,
                          candies_site_indices=None,
-                         solver='SCS',verbose=True,
-                         eps=1e-7,eps_infeas=1e-9,
-                         max_iters= 500000):
+                         verbose=True):
+                         # solver='SCS'
+                         # eps=1e-7,eps_infeas=1e-9,
+                         # max_iters= 500000):
         
         imdf = copy.deepcopy(self.maps[intensity_id])
         nsites = imdf.shape[1]
@@ -587,21 +597,24 @@ class PshaEventSet:
         lambdas_IR = np.diag(np.tile(curve_points**-1,nsites))
 
         N=imcandy.shape[0]
-        M=nsites*curve_points.shape[0]
+        # M=nsites*curve_points.shape[0]
 
         U = theta
-        z = cp.Variable(M)
+        # z = cp.Variable(M)
         x = cp.Variable(N)
-
-        prob = cp.Problem(cp.Minimize(cp.sum(z)), [-z<=1 - lambdas_IR@U@x,
-                                                   1 - lambdas_IR@U@x<=z,
-                                                   x>=0,
-                                                   cp.sum(x)<=w0.sum()])
-        optimal_value = prob.solve(solver=solver,verbose=verbose,
-                                   eps=eps,
-                                   eps_infeas=eps_infeas,
-                                   max_iters= max_iters)
-        print("z=",z.value)
+        objective = cp.Minimize(cp.norm(1 - lambdas_IR@U@x,1))
+        constraints = [x>=0,cp.sum(x)<=w0.sum()]
+        prob = cp.Problem(objective, constraints)
+        # prob = cp.Problem(cp.Minimize(cp.sum(z)), [-z<=1 - lambdas_IR@U@x,
+        #                                            1 - lambdas_IR@U@x<=z,
+        #                                            x>=0,
+        #                                            cp.sum(x)<=w0.sum()])
+        # optimal_value = prob.solve(solver=solver,verbose=verbose,
+        #                            eps=eps,
+        #                            eps_infeas=eps_infeas,
+        #                            max_iters= max_iters)
+        # print("z=",z.value)
+        optimal_value = prob.solve(verbose=verbose)
         print("x=",x.value)
         print("val=",optimal_value)
 

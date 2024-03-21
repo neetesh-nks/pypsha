@@ -51,7 +51,7 @@ try:
 
   setup(
           name='pypsha',
-          version="0.0.3",
+          version="0.0.4",
           packages=PACKAGES,
           include_package_data=True,
           package_dir=PACKAGE_DIR,

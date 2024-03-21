@@ -6,4 +6,4 @@ Package for regional probabilistic seismic hazard analysis
 
 1. Install Java to enable OpenSHA apps
 2. Install cvxpy for optimization modules
-3. pip install psha
+3. pip install pypsha
